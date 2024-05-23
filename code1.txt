@@ -1,0 +1,1329 @@
+;Assignment Name	: Write an ALP to Display "Hello World" using 64-bit programming
+;-----------------------------------------------------------------
+section .data
+	ano		db	10,"	Assignment No.	: 1B",10
+	ano_len	equ	$-ano
+
+	msg 		db 	10,"	Hello world using 64-bit programming!!!",10,10 	; linefeed character
+	msg_len: 	equ 	$-msg		; Length of the 'Hello world!' string
+
+;-----------------------------------------------------------------
+section .text
+	Global _start
+
+_start:
+
+	MOV RAX, 1		; system call 1 is write
+	MOV RDI, 1		; file handle 1 is STDOUT
+	MOV RSI, ano		; "	Assignment No.	: 1B"
+	MOV RDX, ano_len	; number of bytes
+	syscall			; invoke operating system to do the write
+
+	MOV RAX, 1		; system call 1 is write
+	MOV RDI, 1		; file handle 1 is STDOUT
+	MOV RSI, msg		; address of string to output
+	MOV RDX, msg_len	; number of bytes
+	syscall			; invoke operating system to do the write
+
+; exit(0)
+	MOV RAX, 60		; system call 60 is exit
+	MOV RDI, 00 		; we want return code 0
+	syscall 			; invoke operating system to exit
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
+
+
+
+
+2] positive negative;-
+%macro Print 2
+mov rax, 1 ;System call 1 is write
+mov rdi, 1 ;File Handle 1 is STDOUT
+mov rsi, %1 ;Address of String to be displayed
+mov rdx, %2 ;Number of bytes (of String to be displayed)
+syscall ;Invoke Operating System to do Write
+%endmacro
+%macro Exit 0
+mov rax, 60 ;System Call 60 is Exit
+mov rdi, 0 ;We want return code 0
+syscall ;Invoke Operating System to do Write
+%endmacro
+;------------------------------------------------------------------------------------------
+section .data
+nline db 10,10 ;10 is linefeed character
+nline_len equ $-nline
+ano db 10, "Assignment positive and negative", 10
+
+ano_len equ $-ano ;Address of $ (at the end of string) - Address of first character
+arr64 dq -11111111H, 22222222H, -33333333H, 44444444H, 55555555H
+n equ 5
+pmsg db 10,10,"The no. of Positive elements from 64-bit array :"
+pmsg_len equ $-pmsg
+nmsg db 10,10,"The no. of Negative elements from 64-bit array :"
+nmsg_len equ $-nmsg
+;-----------------------------------------------------------------------------------------
+section .bss
+p_count resq 1
+n_count resq 1
+char_ans resb 2
+;-----------------------------------------------------------------------------------------
+section .text
+global _start ;Assembler Starts from label _start
+_start: ;User Propt label
+Print ano, ano_len ;print string message
+mov rsi, arr64
+mov rcx, n
+mov rbx, 0 ;counter for +ve nos
+mov rdx, 0 ;counter for -ve nos
+next_num:
+mov rax, [rsi]
+rol rax, 1 ;rotate number one bit left to obtain MSB
+jc negative ;if carry is set number is negative else positive
+positive:
+inc rbx
+jmp next ;if positive don't increment negative
+negative:
+inc rdx
+next:
+add rsi, 8 ;to make rsi point to next element in array by adding 8 bytes = 64 bits to address
+dec rcx ;decrement n
+jnz next_num ;if n is not 0 then check next number else continue
+mov [p_count], rbx
+mov [n_count], rdx
+Print pmsg, pmsg_len
+mov rax, [p_count]
+call display_proc ;display +ve no count
+Print nmsg, nmsg_len
+mov rax, [n_count]
+call display_proc ;display -ve no count
+Exit
+;-----------------------------------------------------------------------------------------
+display_proc:
+mov rbx, 16 ;divisor = 16
+mov rcx, 2 ;no of digits = 2
+mov rsi, char_ans+1 ;load last byte address of char_ans buffer in rsi
+cnt:
+mov rdx, 0 ; make rdx = 0
+div rbx ;rdx:rax/rbx
+cmp dl, 09h ;remainder of rax/rbx stored in dl is compared with 9
+jbe add30 ;if below or equal to 30 then add 30 to convert into ascii value
+add dl, 07h ;if above 9 then add 37
+add30:
+add dl, 30h
+mov [rsi], dl ;store it in buffer
+dec rsi ;point to one byte back
+dec rcx ;decrement count
+jnz cnt ;if not zero then repeat
+Print char_ans, 2
+ret
+;----------------------------------------------------
+
+
+
+
+
+
+
+
+3] ;Assignment No.	: 3
+;Assignment Name: Write X86/64 ALP to accept a string and to display its length.
+;---------------------------------------------------------------------
+section    .data
+
+	msg		db	10,10,"Enter the string:	"
+	msg_len	equ	$-msg
+
+	smsg		db	10,10,"The length of string is:	"
+	smsg_len	equ	$-smsg
+
+;---------------------------------------------------------------------
+Section   .bss
+	
+    string resb 50
+    stringl equ $-string
+    count resb 1
+	char_ans	resb	2
+;---------------------------------------------------------------------
+%macro  Print   2
+	mov   rax, 1
+	mov   rdi, 1
+	mov   rsi, %1
+	mov   rdx, %2
+	syscall
+%endmacro
+
+%macro  Read   2
+	mov   rax, 0
+	mov   rdi, 0
+	mov   rsi, %1
+	mov   rdx, %2
+	syscall
+%endmacro
+
+%macro	Exit	0
+	mov  rax, 60
+	mov  rdi, 0
+	syscall
+%endmacro
+
+;---------------------------------------------------------------------
+section    .text
+	global   _start
+_start:
+	Print	msg, msg_len
+	Read string, stringl
+	mov [count], rax
+
+    Print smsg, smsg_len
+    mov rax, [count]
+    call Display
+	Exit
+;--------------------------------------------------------------------	
+Display:
+	mov 		rbx,16			; divisor=16 for hex
+	mov 		rcx,2			; number of digits 
+	mov 		rsi,char_ans+1		; load last byte address of char_ans buffer in rsi
+cnt:	mov 		rdx,0			; make rdx=0 (as in div instruction rdx:rax/rbx)
+	div 		rbx
+
+	cmp 		dl, 09h			; check for remainder in rdx
+	jbe  	add30
+	add  	dl, 07h 
+add30:
+	add 		dl,30h			; calculate ASCII code
+	mov 		[rsi],dl			; store it in buffer
+	dec 		rsi				; point to one byte back
+
+	dec 		rcx				; decrement count
+	jnz 		cnt				; if not zero repeat
+	
+	Print 	char_ans,2		; display result on screen
+ret
+;----------------------------------------------------------------
+
+Output :
+
+Enter the string:	Pakshi	
+
+The length of string is:	06
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4]  HEX TO BCD:-
+section .data
+    ; Prompt string for entering a 4-digit hexadecimal number
+    h       db  "Enter 4 digit HEX number : ",10
+    h_len   equ $-h
+
+    ; Output string for displaying the equivalent BCD number
+    b       db  "Equivalent BCD number is : "
+    b_len   equ $-b
+
+    ; Error message for invalid input
+    e       db  "Invalid input number."
+    e_len   equ $-e
+
+;-------------------------------------------------------------------------
+
+section .bss
+    ; Buffer to store user input
+    buf     resb 5
+
+    ; Buffer to store individual BCD digits
+    ch_ans  resb 1
+
+;-------------------------------------------------------------------------
+
+%macro print 2
+    ; Function to print a string
+    mov rax, 1          ; System call for sys_write (write to console)
+    mov rdi, 1          ; File descriptor 1: standard output
+    mov rsi, %1         ; Pointer to the string to print
+    mov rdx, %2         ; Length of the string
+    syscall             ; Call kernel
+%endmacro
+
+%macro read 2
+    ; Function to read input from console
+    mov rax, 0          ; System call for sys_read (read from console)
+    mov rdi, 0          ; File descriptor 0: standard input
+    mov rsi, %1         ; Pointer to the buffer to store input
+    mov rdx, %2         ; Maximum number of bytes to read
+    syscall             ; Call kernel
+%endmacro
+
+%macro exit 0 ; Function to exit the program
+    mov rax, 60         ; System call for sys_exit
+    xor rdi, rdi        ; Exit status 0
+    syscall             ; Call kernel
+%endmacro
+
+;-------------------------------------------------------------------------
+
+section .text
+    global _start
+_start:
+    ; Start of the program
+    call hex_bcd       ; Call the hex_bcd function
+    exit               ; Exit the program
+
+;-------------------------------------------------------------------------
+
+hex_bcd:
+    print h, h_len     ; Prompt the user to enter a hexadecimal number
+    call acc           ; Call the acc function to read and validate input
+    mov ax, bx         ; Move the result of the conversion to ax
+
+    mov bx, 10         ; Move 10 to bx for division
+    xor bp, bp         ; Clear bp register
+
+back:
+    xor dx, dx         ; Clear dx register
+    div bx             ; Divide ax by bx, quotient in ax, remainder in dx
+    push dx            ; Push the remainder (binary digit) onto the stack
+    inc bp             ; Increment bp (counter for number of digits)
+    cmp ax, 0          ; Compare ax to 0
+    jnz back           ; If ax is not zero, continue looping
+
+    print b, b_len     ; Print the message "Equivalent BCD number is : "
+
+back1:
+    pop dx             ; Pop the BCD digit from the stack
+    add dl, 30h        ; Convert the BCD digit to ASCII
+    mov [ch_ans], dl   ; Store the ASCII digit
+    print ch_ans, 1    ; Print the ASCII digit
+
+    dec bp             ; Decrement bp
+    jnz back1          ; If bp is not zero, continue looping
+ret
+
+;-------------------------------------------------------------------------
+
+acc:
+    read buf, 5        ; Read input from the user
+    mov rsi, buf       ; Move the address of buf to rsi
+    mov rcx, 4         ; Set the loop counter to 4
+    xor bx, bx         ; Clear bx register (will hold the binary value)
+
+next_byte:
+    shl bx, 4          ; Shift bx left by 4 bits (equivalent to multiplying by 16)
+    mov al, [rsi]      ; Move the current byte of input to al
+
+    cmp al, '0'        ; Compare al to '0'
+    jb error           ; Jump to error if al is less than '0'
+    cmp al, '9'        ; Compare al to '9'
+    jbe sub30          ; Jump to sub30 if al is between '0' and '9'
+
+    cmp al, 'A'        ; Compare al to 'A'
+    jb error           ; Jump to error if al is less than 'A'
+    cmp al, 'F'        ; Compare al to 'F'
+    jbe sub37          ; Jump to sub37 if al is between 'A' and 'F'
+
+    cmp al, 'a'        ; Compare al to 'a'
+    jb error           ; Jump to error if al is less than 'a'
+    cmp al, 'f'        ; Compare al to 'f'
+    jbe sub57          ; Jump to sub57 if al is between 'a' and 'f'
+
+error:
+    print e, e_len     ; Print the error message
+    exit               ; Exit the program
+
+sub57:
+    sub al, 20h        ; Convert lowercase letter to uppercase
+
+sub37:
+    sub al, 07h        ; Adjust the ASCII value to represent a digit
+
+sub30:
+    sub al, 30h        ; Convert ASCII digit to binary value
+
+    add bx, ax         ; Add the binary value of the digit to bx
+    inc rsi            ; Move to the next byte of input
+    dec rcx            ; Decrement the loop counter
+    jnz next_byte      ; If rcx is not zero, continue looping
+ret
+
+
+
+
+
+
+
+
+
+
+
+
+
+5]BCD TO HEX:-
+section .data
+	a db "enter 5 digit bcd :",10
+	a_len : equ $-a
+	
+	b db "equivalent hex no is ",10
+	b_len : equ $-b
+	
+;--------------------------------------------
+%macro print 2
+    ; Macro for printing a string
+    mov rax, 1       ; System call for sys_write
+    mov rdi, 1       ; File descriptor 1: standard output
+    mov rsi, %1      ; Address of the string to print
+    mov rdx, %2      ; Length of the string
+    syscall          ; Call kernel to print
+%endmacro
+
+%macro read 2
+    ; Macro for reading input
+    mov rax, 0       ; System call for sys_read
+    mov rdi, 0       ; File descriptor 0: standard input
+    mov rsi, %1      ; Address of the buffer to store input
+    mov rdx, %2      ; Maximum number of bytes to read
+    syscall          ; Call kernel to read
+%endmacro
+
+%macro exit 0
+    ; Macro for exiting the program
+    mov rax, 60      ; System call for sys_exit
+    xor rdi, rdi     ; Exit status 0
+    syscall          ; Call kernel to exit
+%endmacro
+
+;----------------------------------------------
+section .bss
+    ; Buffer to store user input (5 digits + newline)
+    buff resb 6
+    
+    ; Variable to store the converted hexadecimal number
+    ans resw 1
+    
+    ; Buffer to store hexadecimal digits (4 digits + null terminator)
+    char_ans resb 5
+
+;----------------------------------------------
+section .text 
+global _start
+_start:
+    ; Entry point of the program
+    call bcd_hex  ; Call the bcd_hex function
+    exit          ; Exit the program
+
+;----------------------------------------------
+bcd_hex:
+    ; Function to convert BCD to hexadecimal
+    print a, a_len  ; Prompt the user to enter a BCD number
+    read buff, 6    ; Read user input
+    mov rsi, buff   ; Point rsi to the input buffer
+    mov ax, 0       ; Initialize ax to store the output
+    mov rbp, 5      ; Counter for the number of digits
+    mov rbx, 10     ; Multiplier for conversion
+
+next_digit:
+    ; Loop to process each BCD digit
+    mov cx, 0          ; Clear cx to store the current digit
+    mul rbx            ; Multiply ax by 10
+    mov cl, [rsi]      ; Load the next BCD digit
+    sub cl, 30h        ; Convert ASCII to binary
+    add ax, cx         ; Add the current digit to ax
+    inc rsi            ; Move to the next digit
+    dec rbp            ; Decrement the digit counter
+    jnz next_digit     ; Repeat until all digits processed
+
+    mov [ans], ax      ; Store the result
+    
+    print b, b_len    ; Print the message about the equivalent hexadecimal number
+    mov ax, [ans]     ; Load the converted hexadecimal number
+    call disp_pro     ; Call function to display the hexadecimal number
+    ret
+
+;----------------------------------------------
+disp_pro:
+    ; Function to display the hexadecimal number
+    mov rbx, 16       ; Set the base to 16 for hexadecimal
+    mov rcx, 4        ; Number of hexadecimal digits
+    mov rsi, char_ans + 3  ; Point to the last character
+
+convert_loop:
+    ; Loop to convert hexadecimal number to ASCII
+    mov rdx, 0        ; Clear rdx for division
+    div rbx           ; Divide ax by 16
+    cmp dl, 9         ; Check if remainder is less than 9
+    jbe add_30h       ; Jump if remainder is less than or equal to 9
+    add dl, 07h       ; Adjust remainder for A-F
+    jmp continue_conv ; Continue conversion
+
+add_30h:
+    ; Add 30h to convert remainder to ASCII
+    add dl, 30h       ; Convert remainder to ASCII
+
+continue_conv:
+    ; Store the ASCII character
+    mov [rsi], dl     ; Store ASCII character
+    dec rsi           ; Move to the previous position
+    dec rcx           ; Decrement counter
+    jnz convert_loop  ; Repeat until all digits converted
+
+    print char_ans, 4 ; Print the hexadecimal number
+    ret               ; Return from function
+
+
+
+
+
+
+
+
+
+
+
+6 A] non overlap with string instruction 
+section .data
+    B_tr db 10,"before transfer "
+    B_tr_len equ $-B_tr
+    A_tr db 10,"after transfer "
+    A_tr_len equ $-A_tr
+    sou db 10,"source block is "
+    sou_len equ $-sou
+    des db 10,"destination block is "
+    des_len equ $-des
+    space db " "
+    space_len equ $-space
+    sblock db 11h,22h,33h,44h,55h
+    dblock times 5 db 0
+
+;-----------------------------------------
+
+%macro print 2
+    mov rax,1
+    mov rdi,1
+    mov rsi,%1
+    mov rdx,%2
+    syscall
+%endmacro
+
+%macro exit 0
+    mov rax,60
+    mov rdi,00
+    syscall
+%endmacro
+
+;-------------------------------------------
+section .bss
+    char_ans resb 2
+
+;----------------------------------------------
+section .text 
+Global _start
+_start :
+    ;-----------------------before transfer 
+    print B_tr,B_tr_len
+    print sou,sou_len
+    mov rsi,sblock
+    call disp_block
+
+    print B_tr,B_tr_len
+    print des,des_len
+    mov rsi,dblock
+    call disp_block
+
+;-----------------end
+;---------After transfer
+ call block_transfer
+
+    print A_tr,A_tr_len
+    print sou,sou_len
+    mov rsi,sblock
+    call disp_block
+
+    print A_tr,A_tr_len
+    print des,des_len
+    mov rsi,dblock
+    call disp_block
+
+
+   
+
+exit
+;----------------------------------
+
+block_transfer :
+    mov rsi,sblock
+    mov rdi,dblock
+    mov rcx,5
+
+    back :
+   cld ;inc rsi,inc rdi
+   rep movsb  ;dec rcx jnz back  movsb :  mov al,[rsi] [rdi],al
+ret
+;---------------------------------
+disp_block :
+    mov rbp ,5
+next_num :
+    mov al,[rsi]
+    push rsi
+    call disp_pro
+     print space,space_len
+    pop rsi
+    inc rsi
+    dec rbp
+    jnz next_num
+ret  
+
+;------------------------------------------
+
+disp_pro :
+    mov rbx,16
+    mov rcx,2
+    mov rsi,char_ans+1
+cnt :
+    mov rdx,0
+    div rbx
+    cmp dl,09h
+    jbe add30
+    add dl,07h
+add30 :
+    add dl,30h
+    mov [rsi],dl
+    dec rsi
+    dec rcx
+    jnz cnt 
+    print char_ans,2
+ret
+;-----------------------------
+
+
+
+
+
+
+
+
+6 B] 7]nonoverlap without string instruction ;-
+section .data
+    B_tr db 10,"before transfer "
+    B_tr_len equ $-B_tr
+    A_tr db 10,"after transfer "
+    A_tr_len equ $-A_tr
+    sou db 10,"source block is "
+    sou_len equ $-sou
+    des db 10,"destination block is "
+    des_len equ $-des
+    space db " "
+    space_len equ $-space
+    sblock db 11h,22h,33h,44h,55h
+    dblock times 5 db 0
+
+;-----------------------------------------
+
+%macro print 2
+    mov rax,1
+    mov rdi,1
+    mov rsi,%1
+    mov rdx,%2
+    syscall
+%endmacro
+
+%macro exit 0
+    mov rax,60
+    mov rdi,00
+    syscall
+%endmacro
+
+;-------------------------------------------
+section .bss
+    char_ans resb 2
+
+;----------------------------------------------
+section .text 
+global _start
+_start :
+    ; Displaying source block before transfer
+    print B_tr, B_tr_len
+    print sou, sou_len
+    mov rsi, sblock  ; Pointing rsi to source block
+    call disp_block  ; Displaying source block
+
+    ; Displaying destination block before transfer
+    print B_tr, B_tr_len
+    print des, des_len
+    mov rsi, dblock  ; Pointing rsi to destination block
+    call disp_block  ; Displaying destination block
+
+    ; Transfer blocks
+    call block_transfer
+
+    ; Displaying source block after transfer
+    print A_tr, A_tr_len
+    print sou, sou_len
+    mov rsi, sblock  ; Pointing rsi to source block
+    call disp_block  ; Displaying source block
+
+    ; Displaying destination block after transfer
+    print A_tr, A_tr_len
+    print des, des_len
+    mov rsi, dblock  ; Pointing rsi to destination block
+    call disp_block  ; Displaying destination block
+
+    exit  ; Exit the program
+
+;----------------------------------
+
+block_transfer :
+    ; Function to transfer blocks
+    mov rsi, sblock  ; Source block address
+    mov rdi, dblock  ; Destination block address
+    mov rcx, 5       ; Number of bytes to transfer
+
+    back :
+     mov al, [rsi]  ; Move byte from source to destination
+     mov [rdi], al
+     inc rsi
+     inc rdi
+     dec rcx
+     jnz back
+
+    ret
+
+;---------------------------------
+disp_block :
+    ; Function to display block
+    mov rbp, 5  ; Counter for number of bytes
+next_num :
+    mov al, [rsi]  ; Load byte from block
+    push rsi
+    call disp_pro  ; Display byte
+    print space, space_len  ; Print space between bytes
+    pop rsi
+    inc rsi
+    dec rbp
+    jnz next_num  ; Repeat for all bytes
+    ret  
+
+;------------------------------------------
+
+disp_pro :
+    ; Function to display a byte in hexadecimal
+    mov rbx, 16  ; Base for hexadecimal
+    mov rcx, 2   ; Number of digits in a byte
+    mov rsi, char_ans + 1  ; Point to the last character of char_ans
+
+cnt :
+    mov rdx, 0
+    div rbx
+    cmp dl, 9
+    jbe add30
+    add dl, 7
+add30 :
+    add dl, 30h
+    mov [rsi], dl
+    dec rsi
+    dec rcx
+    jnz cnt 
+    print char_ans, 2  ; Print the hexadecimal byte
+    ret
+;--------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+7 A] overlap with string instruction ;-
+section .data
+    B_tr db 10,"before transfer "
+    B_tr_len equ $-B_tr
+    A_tr db 10,"after transfer "
+    A_tr_len equ $-A_tr
+    sou db 10,"source block is "
+    sou_len equ $-sou
+    des db 10,"destination block is "
+    des_len equ $-des
+    space db " "
+    space_len equ $-space
+    sblock db 11h,22h,33h,44h,55h
+    dblock times 5 db 0
+
+;-----------------------------------------
+
+%macro print 2
+    mov rax,1
+    mov rdi,1
+    mov rsi,%1
+    mov rdx,%2
+    syscall
+%endmacro
+
+%macro exit 0
+    mov rax,60
+    mov rdi,00
+    syscall
+%endmacro
+
+;-------------------------------------------
+section .bss
+    char_ans resb 2
+
+;----------------------------------------------
+section .text 
+Global _start
+_start :
+    ;-----------------------before transfer 
+    print B_tr,B_tr_len
+    print sou,sou_len
+    mov rsi,sblock
+    call disp_block
+
+    print B_tr,B_tr_len
+    print des,des_len
+    mov rsi,dblock-2   ;for overlap disaly
+    call disp_block
+
+;-----------------end
+;---------After transfer
+ call block_transfer
+
+    print A_tr,A_tr_len
+    print sou,sou_len
+    mov rsi,sblock
+    call disp_block
+
+    print A_tr,A_tr_len
+    print des,des_len
+    mov rsi,dblock-2   ;for overlap display
+    call disp_block
+
+
+   
+
+exit
+;----------------------------------
+
+block_transfer :
+    mov rsi,sblock+4   ;change
+    mov rdi,dblock+2    ;change 
+    mov rcx,5
+
+    back :
+       std                  ; string instruction used 
+       rep movsb             ;chnge 
+ret
+;---------------------------------
+disp_block :
+    mov rbp ,5
+next_num :
+    mov al,[rsi]
+    push rsi
+    call disp_pro
+     print space,space_len
+    pop rsi
+    inc rsi
+    dec rbp
+    jnz next_num
+ret  
+
+
+
+;------------------------------------------
+
+disp_pro :
+    mov rbx,16
+    mov rcx,2
+    mov rsi,char_ans+1
+cnt :
+    mov rdx,0
+    div rbx
+    cmp dl,09h
+    jbe add30
+    add dl,07h
+add30 :
+    add dl,30h
+    mov [rsi],dl
+    dec rsi
+    dec rcx
+    jnz cnt 
+    print char_ans,2
+ret
+;--------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7 B 5] overlap without string instruction ;-
+section .data
+    B_tr db 10,"before transfer "
+    B_tr_len equ $-B_tr
+    A_tr db 10,"after transfer "
+    A_tr_len equ $-A_tr
+    sou db 10,"source block is "
+    sou_len equ $-sou
+    des db 10,"destination block is "
+    des_len equ $-des
+    space db " "
+    space_len equ $-space
+    sblock db 11h,22h,33h,44h,55h
+    dblock times 5 db 0
+
+;-----------------------------------------
+
+%macro print 2
+    mov rax,1
+    mov rdi,1
+    mov rsi,%1
+    mov rdx,%2
+    syscall
+%endmacro
+
+%macro exit 0
+    mov rax,60
+    mov rdi,00
+    syscall
+%endmacro
+
+;-------------------------------------------
+section .bss
+    char_ans resb 2
+
+;----------------------------------------------
+section .text 
+Global _start
+_start :
+    ;-----------------------before transfer 
+    print B_tr,B_tr_len
+    print sou,sou_len
+    mov rsi,sblock
+    call disp_block
+
+    print B_tr,B_tr_len
+    print des,des_len
+    mov rsi,dblock-2   ;dblock start at 4th position of sblock overlapped
+    call disp_block
+
+;-----------------end
+;---------After transfer
+ call block_transfer
+
+    print A_tr,A_tr_len
+    print sou,sou_len
+    mov rsi,sblock
+    call disp_block
+
+    print A_tr,A_tr_len
+    print des,des_len
+    mov rsi,dblock-2   ;change
+    call disp_block
+
+
+   
+
+exit
+;----------------------------------
+
+block_transfer :
+    mov rsi,sblock+4   ;rsi point at the end of sblock0+4=4
+    mov rdi,dblock+2    ;rdi point at the end of dblock-2+4=2
+    mov rcx,5
+
+    back :
+        mov al,[rsi]
+        mov [rdi],al
+
+        dec rsi ;lastt la point krto mnun dec use kel kami hot janar
+        dec rdi ;lastt la point krto mnun dec use kel kami hot janar
+
+        dec rcx 
+        jnz back
+ret
+;---------------------------------
+disp_block :
+    mov rbp ,5
+next_num :
+    mov al,[rsi]
+    push rsi
+    call disp_pro
+     print space,space_len
+    pop rsi
+    inc rsi
+    dec rbp
+    jnz next_num
+ret  
+
+
+
+;------------------------------------------
+
+disp_pro :
+    mov rbx,16
+    mov rcx,2
+    mov rsi,char_ans+1
+cnt :
+    mov rdx,0
+    div rbx
+    cmp dl,09h
+    jbe add30
+    add dl,07h
+add30 :
+    add dl,30h
+    mov [rsi],dl
+    dec rsi
+    dec rcx
+    jnz cnt 
+    print char_ans,2
+ret
+;---------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8] GDTR LDTR TD MSW ;-
+section .data
+    r_mode db "processor i8s in real mode ",10
+    r_mode_len : equ $-r_mode  
+    p_mode db "processoer is in protected mode ",10
+    p_mode_len : equ $-p_mode
+    gdtr_msg db "GDTR :",10
+    gdtr_len : equ $-gdtr_msg
+    ldtr_msg db "LDTR : ",10
+    ldtr_len : equ $-ldtr_msg
+    idtr_msg db "IDTR : " ,10
+    idtr_len : equ $-idtr_msg
+    tr_msg db "TR : ",10
+    tr_len : equ $-tr_msg
+    msw_msg db "MSW :",10
+    msw_len : equ $-msw_msg
+    space db " ",10
+    space_len : equ $-space
+
+;---------------------------------------------------------------
+
+ %macro  Print   2
+mov   rax, 1
+mov   rdi, 1
+mov   rsi, %1
+mov   rdx, %2
+syscall
+%endmacro
+
+%macro Exit 0
+mov  rax, 60
+mov  rdi, 0
+syscall
+%endmacro
+
+;----------------------------------------------------------------------------
+
+Section   .bss
+GDTR resw 3 ; 48 bits, so 3 words
+IDTR resw 3
+LDTR resw 1 ; 16 bits, so 1 word
+TR resw 1
+MSW resw 1
+
+char_ans resb 4 ; 16-bits, so 4 digits
+
+;---------------------------------------------------------------
+
+section .text
+global _start
+_start :
+    SMSW  [MSW] ;store msw in given variable
+    MOV RAX,[MSW]
+    ror rax,1 ; oth bit of PE will store in carry
+    jc protected_mode; if PE bit is set means protected mode
+    Print r_mode, r_mode_len
+    jmp next
+
+protected_mode:
+    Print p_mode, p_mode_len
+next:
+    SGDT [GDTR]
+    SIDT [IDTR]
+    SLDT [LDTR]
+    STR  [TR]
+    SMSW [MSW]
+
+    ; GDTR
+    Print gdtr_msg, gdtr_len
+    mov ax,[GDTR+4] ; value at 4th and 5th location is loaded
+    call disp16_proc
+    mov ax,[GDTR+2]  ; value at 2nd and 3rd location is loaded
+    call disp16_proc
+    Print space,space_len
+    mov ax,[GDTR+0]  ; value at 0th and 1st location is loaded
+    call disp16_proc
+     Print space,space_len
+
+    ;IDTR
+    Print idtr_msg, idtr_len
+    mov ax,[IDTR+4] ; value at 4th and 5th location is loaded
+    call disp16_proc
+    mov ax,[IDTR+2]  ; value at 2nd and 3rd location is loaded
+    call disp16_proc
+    Print space,space_len
+    mov ax,[IDTR+0]  ; value at 0th and 1st location is loaded
+    call disp16_proc
+     Print space,space_len
+
+    ;LDTR
+    Print ldtr_msg, ldtr_len
+    mov ax,[LDTR]
+    call disp16_proc
+     Print space,space_len
+
+    ;TR
+    Print tr_msg, tr_len
+    mov ax,[TR]
+    call disp16_proc
+     Print space,space_len
+
+    ;msw
+    Print msw_msg, msw_len
+    mov ax,[MSW]
+    call disp16_proc
+
+;---------------------------------------------------------------
+
+disp16_proc:
+mov rbx,16 ; divisor=16 for hex
+mov rcx,4 ; number of digits
+mov rsi,char_ans+3 ; load last byte address of char_ans buffer in rsi
+
+cnt: mov rdx,0 ; make rdx=0 (as in div instruction rdx:rax/rbx)
+div rbx
+
+cmp dl, 09h ; check for remainder in rdx
+jbe   add30
+add   dl, 07h
+add30:
+add dl,30h ; calculate ASCII code
+mov [rsi],dl ; store it in buffer
+dec rsi ; point to one byte back
+
+dec rcx ; decrement count
+jnz cnt ; if not zero repeat
+
+Print char_ans,4 ; display result on screen
+ret
+;--------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8]Code :
+
+;This program first check the mode of processor(Real or Protected),
+;then reads GDTR, IDTR, LDTR, TR, MSW and displays the same.
+;-------------------------------------------------------------------
+section    .data
+	nline	db	10,10
+	nline_len	equ	$-nline
+	colon		db	":"
+
+	rmsg 	db 	10,'Processor is in Real Mode...'
+	rmsg_len	equ 	$-rmsg
+
+	pmsg 	db 	10,'Processor is in Protected Mode...'
+	pmsg_len	equ 	$-pmsg
+
+	gmsg		db	10,"GDTR (Global Descriptor Table Register)	: "
+	gmsg_len	equ	$-gmsg
+
+	imsg		db	10,"IDTR (Interrupt Descriptor Table Register)	: "
+	imsg_len	equ	$-imsg
+
+	lmsg		db	10,"LDTR (Local Descriptor Table Register)	: "
+	lmsg_len	equ	$-lmsg
+
+	tmsg		db	10,"TR (Task Register)		: "
+	tmsg_len	equ	$-tmsg
+
+	mmsg		db	10,"MSW (Machine Status Word)	: "
+	mmsg_len	equ	$-mmsg
+;---------------------------------------------------------------------
+Section   .bss
+	GDTR		resw	3		; 48 bits, so 3 words
+	IDTR		resw	3
+	LDTR		resw	1		; 16 bits, so 1 word
+	TR		resw	1
+	MSW		resw	1
+
+	char_ans	resb	4		; 16-bits, so 4 digits
+;---------------------------------------------------------------------
+%macro  Print   2
+	mov   rax, 1
+	mov   rdi, 1
+	mov   rsi, %1
+	mov   rdx, %2
+	syscall
+%endmacro
+
+%macro  Read   2
+	mov   rax, 0
+	mov   rdi, 0
+	mov   rsi, %1
+	mov   rdx, %2
+	syscall
+%endmacro
+
+%macro	Exit	0
+	mov  rax, 60
+	mov  rdi, 0
+	syscall
+%endmacro
+
+;---------------------------------------------------------------------
+
+section    .text
+	global   _start
+_start:
+
+	SMSW		[MSW]
+
+	mov		rax,[MSW]
+	ror 		rax,1			; Check PE bit, if 1=Protected Mode, else Real Mode
+	jc 		p_mode
+
+	Print	rmsg,rmsg_len
+	jmp		next
+
+p_mode:	
+	Print	pmsg,pmsg_len
+
+next:
+	SGDT		[GDTR]
+	SIDT		[IDTR]
+	SLDT		[LDTR]
+	STR		[TR]
+	SMSW		[MSW]
+
+	Print	gmsg, gmsg_len		;GDTR (Global Descriptor Table Register)
+							; LITTLE ENDIAN SO TAKE LAST WORD FIRST
+	mov 		ax,[GDTR+4]		; load value of GDTR[4,5] in ax
+	call 	disp16_proc		; display GDTR contents
+	mov 		ax,[GDTR+2]		; load value of GDTR[2,3] in ax
+	call 	disp16_proc		; display GDTR contents
+	Print	colon,1
+	mov 		ax,[GDTR+0]		; load value of GDTR[0,1] in ax
+	call 	disp16_proc		; display GDTR contents
+
+	Print	imsg, imsg_len		;IDTR (Interrupt Descriptor Table Register) 
+	mov 		ax,[IDTR+4]		
+	call 	disp16_proc		
+	mov 		ax,[IDTR+2]		
+	call 	disp16_proc		
+	Print	colon,1
+	mov 		ax,[IDTR+0]		
+	call 	disp16_proc				
+
+	Print	lmsg, lmsg_len		;LDTR (Local Descriptor Table Register)
+	mov 		ax,[LDTR]		
+	call 	disp16_proc		
+
+	Print	tmsg, tmsg_len		;TR (Task Register)	
+	mov 		ax,[TR]		
+	call 	disp16_proc		
+
+	Print	mmsg, mmsg_len		;MSW (Machine Status Word)	
+	mov 		ax,[MSW]		
+	call 	disp16_proc		
+
+	Print	nline, nline_len
+	Exit
+;--------------------------------------------------------------------	
+disp16_proc:
+	mov 		rbx,16			; divisor=16 for hex
+	mov 		rcx,4			; number of digits 
+	mov 		rsi,char_ans+3		
+   
+    ; load last byte address of char_ans buffer in rsi
+
+cnt:	mov 		rdx,0			; make rdx=0 (as in div instruction rdx:rax/rbx)
+	div 		rbx
+
+	cmp 		dl, 09h			; check for remainder in rdx
+	jbe  	add30
+	add  	dl, 07h 
+add30:
+	add 		dl,30h			; calculate ASCII code
+	mov 		[rsi],dl			; store it in buffer
+	dec 		rsi				; point to one byte back
+
+	dec 		rcx				; decrement count
+	jnz 		cnt				; if not zero repeat]
+
+    Print char_ans,4
+    ret
+
+
+Output :
+
+Processor is in Protected Mode...
+GDTR (Global Descriptor Table Register)	: 00001000:007F
+IDTR (Interrupt Descriptor Table Register)	: 00000000:0FFF
+LDTR (Local Descriptor Table Register)	: 0000
+TR (Task Register)		: 0040
+MSW (Machine Status Word)	: 0033
+
+
+[Execution complete with exit code 0]
+
+
+
+
+
+
+
+
+
+
